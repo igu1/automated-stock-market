@@ -54,6 +54,7 @@ class StockAgent:
 
     def registerAllTools(self):
         return [
+
             # Gather Tools
             AnalystRecommendationsTool(),
             CompanyInfoTool(),
