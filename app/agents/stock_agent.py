@@ -55,34 +55,33 @@ class StockAgent:
     def registerAllTools(self):
         return [
             # Gather Tools
-            AnalystRecommendationsTool,
-            CompanyInfoTool,
-            CompanyNewsTool,
-            HistoricalStockPricesTool,
-            IncomeStatementTool,
-            KeyFinancialRatiosTool,
-            StockFundamentalsTool,
-            StockPriceTool,
-            TechnicalIndicatorsTool,
-            TickerByNameTool,
+            AnalystRecommendationsTool(),
+            CompanyInfoTool(),
+            CompanyNewsTool(),
+            HistoricalStockPricesTool(),
+            IncomeStatementTool(),
+            KeyFinancialRatiosTool(),
+            StockFundamentalsTool(),
+            StockPriceTool(),
+            TechnicalIndicatorsTool(),
+            TickerByNameTool(),
 
             # Trade Tools
-            MarketOrderTool,
-            LimitOrderTool,
-            ShortOrderTool,
-            ClientOrderIDTool,
-            BracketOrderTool,
-            TrailingStopOrderTool,
-            RetrieveOrdersTool,
+            MarketOrderTool(),
+            LimitOrderTool(),
+            ShortOrderTool(),
+            ClientOrderIDTool(),
+            BracketOrderTool(),
+            TrailingStopOrderTool(),
+            RetrieveOrdersTool(),
 
             # Assets Tools
-            GetAssetsTool,
-            CheckAssetTradabilityTool,
-
-            # Account Tools
-            PortfolioGainLossTool,
-            AccountInfoTool,
+            GetAssetsTool(),
+            CheckAssetTradabilityTool(),
+            PortfolioTool(),
+            AccountInfoTool(),
+            PortfolioGainLossTool(),
 
             # Position Tools
-            PortfolioTool,
+            PortfolioTool(),
         ]
