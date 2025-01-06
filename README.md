@@ -108,9 +108,8 @@ flask --app app run
 ### 7. Start the Celery Worker
 
 ```bash
-celery -A app.tasks.stock_task worker --loglevel=info
+celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4
 ```
-
 ---
 
 ## Usage
