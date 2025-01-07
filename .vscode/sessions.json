@@ -1,0 +1,57 @@
+{
+    "$schema": "https://cdn.statically.io/gh/nguyenngoclongdev/cdn/main/schema/v10/terminal-keeper.json",
+    "theme": "tribe",
+    "active": "default",
+    "activateOnStartup": true,
+    "keepExistingTerminals": false,
+    "sessions": {
+        "default": [
+            [
+                {
+                    "name": "agent",
+                    "autoExecuteCommands": true,
+                    "icon": "person",
+                    "color": "terminal.ansiGreen",
+                    "commands": [
+                        "flask --app app run"
+                    ]
+                },
+                {
+                    "name": "web",
+                    "autoExecuteCommands": true,
+                    "icon": "window",
+                    "color": "terminal.ansiGreen",
+                    "commands": [
+                        "py web/manage.py runserver"
+                    ]
+                }
+            ],
+            [
+              {
+                "name": "celery",
+                "icon": "wrench",
+                "color": "terminal.ansiMagenta",
+                "commands": [
+                    "celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4"
+                ]
+            },
+            {
+                "name": "redis",
+                "icon": "wrench",
+                "color": "terminal.ansiYellow",
+                "commands": [
+                    "docker run --name redis -p 6379:6379 -d redis:latest"
+                ]
+            }
+            ]
+        ],
+        "saved-session": [
+            {
+                "name": "connect",
+                "commands": [
+                    ""
+                ]
+            }
+        ]
+    }
+}
