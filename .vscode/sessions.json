@@ -27,22 +27,22 @@
                 }
             ],
             [
-              {
-                "name": "celery",
-                "icon": "wrench",
-                "color": "terminal.ansiMagenta",
-                "commands": [
-                    "celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4"
-                ]
-            },
-            {
-                "name": "redis",
-                "icon": "database",
-                "color": "terminal.ansiYellow",
-                "commands": [
-                    "docker run --name redis -p 6379:6379 -d redis:latest"
-                ]
-            }
+                {
+                    "name": "celery",
+                    "icon": "wrench",
+                    "color": "terminal.ansiMagenta",
+                    "commands": [
+                        "celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4"
+                    ]
+                },
+                {
+                    "name": "redis",
+                    "icon": "database",
+                    "color": "terminal.ansiYellow",
+                    "commands": [
+                        "docker run --name redis -p 6379:6379 redis:latest"
+                    ]
+                }
             ]
         ],
         "saved-session": [
