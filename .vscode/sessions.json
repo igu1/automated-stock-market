@@ -30,6 +30,7 @@
                 {
                     "name": "celery",
                     "icon": "wrench",
+                    "autoExecuteCommands": true,
                     "color": "terminal.ansiMagenta",
                     "commands": [
                         "celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4"
@@ -37,6 +38,7 @@
                 },
                 {
                     "name": "redis",
+                    "autoExecuteCommands": true,
                     "icon": "database",
                     "color": "terminal.ansiYellow",
                     "commands": [
