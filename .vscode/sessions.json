@@ -37,7 +37,7 @@
             },
             {
                 "name": "redis",
-                "icon": "wrench",
+                "icon": "database",
                 "color": "terminal.ansiYellow",
                 "commands": [
                     "docker run --name redis -p 6379:6379 -d redis:latest"
