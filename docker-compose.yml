@@ -1,17 +1,28 @@
 services:
-  flask-app:
+  agent-system:
     build:
       context: .
+      dockerfile: Dockerfile.agent
     container_name: agent-system
     ports:
       - "5000:5000"
     depends_on:
       - redis
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - agent-system
+
   celery-worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.agent
     container_name: celery_worker
     command: celery -A service.celery.celery worker --loglevel=info
     depends_on:
@@ -21,4 +32,4 @@ services:
     image: redis:latest
     container_name: redis
     ports:
-      - "6379:6379"
+      - "6379"
