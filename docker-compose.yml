@@ -24,7 +24,7 @@ services:
       context: .
       dockerfile: Dockerfile.agent
     container_name: celery_worker
-    command: celery -A service.celery.celery worker --loglevel=info
+    command: celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4
     depends_on:
       - redis
 
