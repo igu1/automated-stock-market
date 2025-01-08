@@ -19,6 +19,6 @@ from .trade import (
     TrailingStopOrderTool,
     RetrieveOrdersTool,
 )
-from .assets import GetAssetsTool, CheckAssetTradabilityTool
+from .assets import CheckAssetTradabilityTool
 from .account import PortfolioGainLossTool, AccountInfoTool
 from .position import PortfolioTool

@@ -4,7 +4,7 @@ from alpaca.trading.client import TradingClient
 class AlpacaTradingBaseTool(Tool):
     def __init__(self):
         super().__init__()
-        self.trading_client = TradingClient("PKT393R8L2MXJGA9VYW9", "XSItPXW4owfV2Wbej7AMbZjOOEXBxgzdkuyxbg64", paper=True)
+        self.trading_client = TradingClient("PKE6BISKQV2W3QTD8K28", "oXhV8HblBc05eBlxfXBV8FZl8RxYqgHjAsH4tlcV", paper=True)
 
 
 class AccountInfoTool(AlpacaTradingBaseTool,Tool):

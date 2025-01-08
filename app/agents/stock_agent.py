@@ -10,10 +10,10 @@ class StockAgent:
         self.debug = config.get("DEBUG", True)
         self.max_iterations = config.get("MAX_ITERATIONS", 10)
         self.used_packages = []
-        if not self.debug:
-            self.model_id = LiteLLMModel("deepseek/deepseek-coder")
-        else:
-            self.model_id = LiteLLMModel("gemini/gemini-2.0-flash-exp")
+        # if not self.debug:
+        self.model_id = LiteLLMModel("deepseek/deepseek-coder")
+        # else:
+            # self.model_id = LiteLLMModel("gemini/gemini-2.0-flash-exp")
         self.web_agent: ToolCallingAgent = ToolCallingAgent(
             tools=[VisitWebpageTool(), DuckDuckGoSearchTool()],
             model=self.model_id,
@@ -77,7 +77,7 @@ class StockAgent:
             RetrieveOrdersTool(),
 
             # Assets Tools
-            GetAssetsTool(),
+            # GetAssetsTool(),
             CheckAssetTradabilityTool(),
             PortfolioTool(),
             AccountInfoTool(),

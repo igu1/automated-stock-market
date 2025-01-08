@@ -6,31 +6,31 @@ from alpaca.trading.enums import AssetClass
 class AlpacaTradingBaseTool(Tool):
     def __init__(self):
         super().__init__()
-        self.trading_client = TradingClient("PKT393R8L2MXJGA9VYW9", "XSItPXW4owfV2Wbej7AMbZjOOEXBxgzdkuyxbg64", paper=True)
+        self.trading_client = TradingClient("PKE6BISKQV2W3QTD8K28", "oXhV8HblBc05eBlxfXBV8FZl8RxYqgHjAsH4tlcV", paper=True)
 
-class GetAssetsTool(AlpacaTradingBaseTool, Tool):
-    name = "get_assets_tool"
-    description = "Retrieve a list of assets available on Alpaca."
+# class GetAssetsTool(AlpacaTradingBaseTool, Tool):
+#     name = "get_assets_tool"
+#     description = "Retrieve a list of assets available on Alpaca."
 
-    inputs = {
-        "asset_class": {
-            "type": "string",
-            "description": "The asset class to search for (e.g., 'US_EQUITY' or 'CRYPTO').",
-        }
-    }
-    output_type = "string"
+#     inputs = {
+#         "asset_class": {
+#             "type": "string",
+#             "description": "The asset class to search for (e.g., 'US_EQUITY' or 'CRYPTO', 'NSE' or 'BSE').",
+#         }
+#     }
+#     output_type = "string"
 
-    def forward(self, asset_class: str) -> str:
-        try:
-            search_params = GetAssetsRequest(asset_class=AssetClass[asset_class.upper()])
-            assets = self.trading_client.get_all_assets(search_params)
+#     def forward(self, asset_class: str) -> str:
+#         try:
+#             search_params = GetAssetsRequest(asset_class=AssetClass[asset_class.upper()])
+#             assets = self.trading_client.get_all_assets(search_params)
 
-            # Format the response
-            asset_list = [f"{asset.symbol}: {asset.name}" for asset in assets]
-            return "\n".join(asset_list) if asset_list else "No assets found for the specified asset class."
+#             # Format the response
+#             asset_list = [f"{asset.symbol}: {asset.name}" for asset in assets]
+#             return "\n".join(asset_list) if asset_list else "No assets found for the specified asset class."
 
-        except Exception as e:
-            return f"An error occurred: {e}"
+#         except Exception as e:
+#             return f"An error occurred: {e}"
 
 
 class CheckAssetTradabilityTool(AlpacaTradingBaseTool, Tool):
