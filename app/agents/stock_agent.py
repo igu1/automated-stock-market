@@ -1,31 +1,58 @@
 import os
+from typing import Optional, List, Dict, Any
 from smolagents import CodeAgent, LiteLLMModel, DuckDuckGoSearchTool, VisitWebpageTool, ManagedAgent, ToolCallingAgent
 from app.tools import *
 from flask import current_app
 
-
 class StockAgent:
-    def __init__(self):
+    """
+    Main agent class for handling stock trading operations.
+    
+    This agent provides capabilities for:
+    - Web searching and data gathering
+    - Stock trading operations
+    - Portfolio management
+    - Market data analysis
+    
+    Attributes:
+        debug (bool): Debug mode flag from app config
+        max_iterations (int): Maximum iterations for agent operations
+        used_packages (List[str]): List of used Python packages
+        model_id (LiteLLMModel): AI model for agent operations
+        web_agent (ToolCallingAgent): Agent for web search operations
+        managed_web_agent (ManagedAgent): Managed wrapper for web agent
+        trader (CodeAgent): Agent for trading operations
+        managed_trader_agent (ManagedAgent): Managed wrapper for trader agent
+        manager (CodeAgent): Main agent manager coordinating all operations
+    """
+    def __init__(self) -> None:
+        """
+        Initialize the StockAgent with configuration from Flask app.
+        
+        Sets up:
+        - Debug mode from app config
+        - Maximum iterations for agent operations
+        - Web search agent with DuckDuckGo and webpage visit tools
+        - Trading agent with all registered tools
+        - Main manager agent coordinating all operations
+        """
         config = current_app.config if current_app else {}
         self.debug = config.get("DEBUG", True)
         self.max_iterations = config.get("MAX_ITERATIONS", 10)
         self.used_packages = []
-        # if not self.debug:
         self.model_id = LiteLLMModel("deepseek/deepseek-coder")
-        # else:
-            # self.model_id = LiteLLMModel("gemini/gemini-2.0-flash-exp")
-        self.web_agent: ToolCallingAgent = ToolCallingAgent(
+        self.web_agent = ToolCallingAgent(
             tools=[VisitWebpageTool(), DuckDuckGoSearchTool()],
             model=self.model_id,
             max_iterations=self.max_iterations,
         )
-        self.managed_web_agent: ManagedAgent = ManagedAgent(
+        self.managed_web_agent = ManagedAgent(
             agent=self.web_agent,
             name="search",
             description="Runs web searches for you. Give it your query as an argument.",
         )
 
-        self.trader: CodeAgent = CodeAgent(
+        self.trader = CodeAgent(
             tools=self.registerAllTools(),
             model=self.model_id,
             max_iterations=self.max_iterations,
@@ -36,7 +63,7 @@ class StockAgent:
             description="Use to fetch market data, place orders, retrieve orders, get assets, check asset tradability, and more.",
         )
 
-        self.manager: CodeAgent = CodeAgent(
+        self.manager = CodeAgent(
             tools=[],
             model=self.model_id,
             max_iterations=self.max_iterations,
@@ -45,14 +72,36 @@ class StockAgent:
             planning_output=os.path.join(os.getcwd()),
         )
 
-    def run(self, task=None):
+    def run(self, task: Optional[str] = None) -> Any:
+        """
+        Execute a trading task using the agent system.
+        
+        Args:
+            task (str, optional): The task to execute. Must be provided.
+            
+        Returns:
+            Any: Result of the agent operation
+            
+        Raises:
+            ValueError: If no task is provided
+        """
         if not task:
             raise ValueError("Task must be provided.")
-        return self.trader.run(
+        return self.manager.run(
             f"{task}, use {', '.join(self.used_packages)} python package" if self.used_packages else task
         )
 
-    def registerAllTools(self):
+    def registerAllTools(self) -> List[Any]:
+        """
+        Register all available tools for the trading agent.
+        
+        Returns:
+            List[Any]: List of all registered tools categorized by:
+                - Data gathering tools
+                - Trading tools
+                - Asset management tools
+                - Portfolio tools
+        """
         return [
 
             # Gather Tools
@@ -79,7 +128,6 @@ class StockAgent:
             # Assets Tools
             # GetAssetsTool(),
             CheckAssetTradabilityTool(),
-            PortfolioTool(),
             AccountInfoTool(),
             PortfolioGainLossTool(),
 

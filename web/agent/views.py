@@ -48,7 +48,7 @@ def agent_run(request):
             asyncio.set_event_loop(loop)
             result = loop.run_until_complete(run_agent(query))
             response = TaskModel.objects.create(**result, user=request.user, question=query)
-            return JsonResponse({"task_id": response.task_id})
+            return redirect('index')
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
     else:

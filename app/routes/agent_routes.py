@@ -9,8 +9,7 @@ def run_agent():
     query = data.get('query')
     if not query:
         return jsonify({"error": "Query is required"}), 400
-    debug = data.get('debug', False)
-    task = run_stock_agent_task.apply_async(args=[query, debug])
+    task = run_stock_agent_task.apply_async(args=[query])
     return jsonify({"task_id": task.id}), 202
 
 @agent_bp.route('/agent/status/<task_id>', methods=['GET'])

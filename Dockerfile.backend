@@ -1,19 +1,50 @@
-FROM python:3.11-slim
+# Build stage
+FROM python:3.11-slim as builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    git \
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libssl-dev \
     libffi-dev \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ./web /app
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5000
+# Runtime stage
+FROM python:3.11-slim
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:5000"]
+# Create non-root user
+RUN useradd -m backend && \
+    mkdir -p /app && \
+    chown backend:backend /app
+
+WORKDIR /app
+USER backend
+
+# Copy virtual environment from builder
+COPY --from=builder --chown=backend:backend /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy application code
+COPY --chown=backend:backend ./web /app
+
+# Configure logging
+RUN mkdir -p /app/logs && chown backend:backend /app/logs
+ENV LOG_PATH=/app/logs/app.log
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

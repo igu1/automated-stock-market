@@ -1,176 +1,223 @@
+# Stock Trading Agent System
 
-# Stock Trading Agent with Flask, Celery, and Redis
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Security](https://img.shields.io/badge/Security-Audited-brightgreen.svg)](SECURITY.md)
+[![CI/CD](https://github.com/yourusername/stock-trading-agent/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/yourusername/stock-trading-agent/actions)
 
-This project is a Python-based stock trading agent powered by Flask for the API, Celery for task management, and Redis for task queuing and result backend. The agent leverages advanced tools and models to handle trading-related queries, perform market data analysis, and execute trades programmatically.
+A sophisticated stock trading and analysis system powered by AI agents, providing real-time market analysis, automated trading strategies, and portfolio management.
 
----
+## Table of Contents
+- [Features](#features)
+- [System Architecture](#system-architecture)
+- [Security Best Practices](#security-best-practices)
+- [Installation](#installation)
+  - [Development Setup](#development-setup)
+  - [Production Deployment](#production-deployment)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Monitoring & Alerting](#monitoring--alerting)
+- [Performance Optimization](#performance-optimization)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
-- **Dynamic Stock Agent**: Supports web-based searches and trading operations using a combination of custom tools.
-- **Asynchronous Task Execution**: Powered by Celery and Redis, enabling non-blocking API calls.
-- **RESTful API**: Exposes endpoints for running the agent and checking task status.
-- **Configurable Models**: Dynamically adjusts the agent's behavior based on configuration (e.g., debug mode, model selection).
-- **Dockerized**: Includes Docker support for easy deployment with Flask, Celery, and Redis.
+- **Real-time Market Analysis**
+  - Technical indicators (RSI, MACD, Bollinger Bands)
+  - Fundamental analysis (P/E ratio, EPS, dividend yield)
+  - Sentiment analysis from news and social media
 
----
+- **Automated Trading**
+  - AI-powered trading strategies
+  - Risk management and position sizing
+  - Backtesting capabilities
 
-## Project Structure
+- **Portfolio Management**
+  - Real-time portfolio tracking
+  - Performance analytics
+  - Risk assessment
 
-```
-project_root/
-├── app/
-│   ├── __init__.py          # Flask app initialization
-│   ├── routes/
-│   │   ├── __init__.py      # Blueprint initialization
-│   │   ├── agent_routes.py  # Routes for StockAgent API
-│   ├── tasks/
-│   │   ├── __init__.py      # Celery task registration
-│   │   └── stock_tasks.py   # Celery tasks for the StockAgent
-│   ├── agents/
-│   │   ├── __init__.py      # Initialization for agents
-│   │   └── stock_agent.py   # StockAgent implementation
-│   ├── tools/
-│   │   ├── __init__.py      # Helper tools initialization
-│   │   └── helpers.py       # General utility/helper functions
-│   ├── config.py            # Flask and Celery configuration
-├── tests/                   # Unit and integration tests
-├── customagents/            # Custom libraries and tools
-├── .dockerignore            # Files to exclude from Docker image
-├── .env                     # Environment variables (Flask, Redis, etc.)
-├── docker-compose.yml       # Docker Compose configuration
-├── Dockerfile               # Dockerfile for Flask and Celery
-├── requirements.txt         # Python dependencies
-└── README.md                # Project documentation
+- **Web Interface**
+  - Interactive dashboards
+  - Real-time notifications
+  - Historical data visualization
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[Web Interface] --> B[Backend API]
+    B --> C[Agent System]
+    C --> D[Market Data]
+    C --> E[Trading Platform]
+    B --> F[Redis]
+    B --> G[PostgreSQL]
+    C --> H[Celery Workers]
 ```
 
----
+## Security Best Practices
 
-## Setup and Installation
+### Environment Variables Management
+- Use `.env` file for development
+- Use secret management in production (AWS Secrets Manager, HashiCorp Vault)
+- Never commit secrets to version control
+- Rotate API keys regularly
 
-### 1. Clone the Repository
+### Secure Configuration
+- Enable HTTPS for all services
+- Use strong passwords for Redis and PostgreSQL
+- Implement rate limiting
+- Enable CORS with strict origin policy
 
-```bash
-git clone https://github.com/igu1/automated-stock-market
-cd automated-stock-market
-```
+### Monitoring
+- Set up intrusion detection
+- Monitor for suspicious activity
+- Regular security audits
 
-### 2. Create a Virtual Environment
+## Installation
 
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+### Development Setup
 
-### 3. Install Dependencies
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/stock-trading-agent.git
+   cd stock-trading-agent
+   ```
 
-```bash
-pip install -r requirements.txt
-```
+2. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-### 4. Configure the Environment
+3. Build and run with Docker:
+   ```bash
+   docker-compose -f docker-compose.dev.yml up --build
+   ```
 
-Create a `.env` file in the project root:
+4. Run database migrations:
+   ```bash
+   docker-compose exec web python manage.py migrate
+   ```
 
-```env
-DEBUG=True
-SECRET_KEY=your_secret_key
-MAX_ITERATIONS=10
-CELERY_BROKER_URL=redis://127.0.0.1:6379/0
-CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/0
+5. Access services:
+   - Web Interface: `http://localhost:8000`
+   - API Docs: `http://localhost:8000/docs`
+   - Redis Commander: `http://localhost:8081`
 
-GEMINI_API_KEY=your_gemini_api_key
-DEEPSEEK_API_KEY=your_deepseek_api_key
-ALPACA_API_KEY=your_alpaca_api_key
-ALPACA_SECRET_KEY=your_alpaca_secret_key
-```
+### Production Deployment
 
-### 5. Start Redis
+1. Set up production environment variables:
+   ```bash
+   cp .env.production.example .env
+   # Configure production settings
+   ```
 
-Make sure Redis is running:
+2. Build production containers:
+   ```bash
+   docker-compose -f docker-compose.prod.yml build
+   ```
 
-```bash
-redis-server
-```
+3. Start services:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
 
-Alternatively, use Docker to run Redis:
+4. Set up monitoring:
+   ```bash
+   docker-compose -f docker-compose.monitoring.yml up -d
+   ```
 
-```bash
-docker run -d -p 6379:6379 redis
-```
+## Configuration
 
-### 6. Start the Flask App
+### Key Environment Variables
 
-```bash
-flask --app app run
-```
+| Variable               | Description                          | Default       | Required |
+|------------------------|--------------------------------------|---------------|----------|
+| `DEBUG`                | Enable debug mode                    | `False`       | No       |
+| `SECRET_KEY`           | Django secret key                    |               | Yes      |
+| `DATABASE_URL`         | PostgreSQL connection string         |               | Yes      |
+| `REDIS_URL`            | Redis connection string              |               | Yes      |
+| `API_KEY`              | Trading platform API key             |               | Yes      |
+| `LOG_LEVEL`            | Logging level (DEBUG, INFO, WARN)    | `INFO`        | No       |
+| `ALLOWED_HOSTS`        | Allowed hostnames                    | `*`           | No       |
+| `CORS_ORIGIN_WHITELIST`| CORS allowed origins                 |               | No       |
 
-### 7. Start the Celery Worker
+## API Documentation
 
-```bash
-celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4
-```
----
+The system provides REST API endpoints documented using OpenAPI 3.0. Access the interactive documentation at `http://localhost:8000/docs`.
 
-## Usage
+### Key Endpoints
 
-### Run the Agent
+| Endpoint               | Method | Description                     | Authentication |
+|------------------------|--------|---------------------------------|----------------|
+| `/api/analyze`         | POST   | Analyze stock data              | API Key        |
+| `/api/trade`           | POST   | Execute trading strategy        | API Key        |
+| `/api/portfolio`       | GET    | Get portfolio information       | API Key        |
+| `/api/history`         | GET    | Get trading history             | API Key        |
 
-Send a POST request to `/agent/run`:
+## Monitoring & Alerting
 
-```bash
-curl -X POST http://127.0.0.1:5000/agent/run -H "Content-Type: application/json" -d '{"query": "give me all my history trades", "debug": false}'
-```
+The system includes built-in monitoring with:
 
-### Check Task Status
+- Prometheus for metrics collection
+- Grafana for visualization
+- Alertmanager for notifications
 
-Retrieve the task status using the task ID:
+Access monitoring dashboards at `http://localhost:3000`
 
-```bash
-curl http://127.0.0.1:5000/agent/status/<task_id>
-```
+### Key Metrics Tracked
+- API response times
+- Error rates
+- Resource utilization
+- Trading activity
 
----
+## Performance Optimization
 
-## Running with Docker
+### Caching Strategies
+- Redis caching for frequent queries
+- Database query optimization
+- Connection pooling
 
-### Build and Start the Application
+### Scaling
+- Horizontal scaling of Celery workers
+- Load balancing for web services
+- Database replication
 
-```bash
-docker-compose up --build
-```
+## Troubleshooting
 
-- **Flask API**: Accessible at `http://localhost:5000`.
-- **Celery Worker**: Connected to Redis automatically.
-- **Redis**: Managed by Docker Compose.
+### Common Issues
 
----
+**Database Connection Errors**
+- Verify `DATABASE_URL` is correct
+- Check PostgreSQL logs
+- Ensure database is running
 
-## Testing
+**Redis Connection Issues**
+- Verify `REDIS_URL` is correct
+- Check Redis logs
+- Ensure Redis is running
 
-Run unit and integration tests:
-
-```bash
-pytest tests/
-```
-
----
+**API Authentication Failures**
+- Verify API key is correct
+- Check request headers
+- Validate token expiration
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and submit a pull request for review.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
----
+### Development Guidelines
+- Follow PEP 8 style guide
+- Write unit tests for new features
+- Document all public interfaces
+- Maintain backward compatibility
 
 ## License
 
-This project is licensed under the [Apache License 2.0](LICENSE).
-
----
-
-## Contact
-
-For questions or suggestions, feel free to reach out:
-
-- **GitHub**: [igu1](https://github.com/igu1)
-- **Email**: eesaard@gmail.com
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

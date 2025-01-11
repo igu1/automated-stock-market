@@ -1,3 +1,16 @@
+version: '3.8'
+
+x-common-env: &common-env
+  DEBUG: ${DEBUG:-True}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+  DATABASE_URL: postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-pass}@db:5432/${POSTGRES_DB:-agent}
+  API_KEY: ${API_KEY:?API_KEY is required}
+  REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+  PYTHONUNBUFFERED: 1
+  PYTHONFAULTHANDLER: 1
+  PYTHONHASHSEED: random
+
 services:
   agent-system:
     build:
@@ -6,8 +19,37 @@ services:
     container_name: agent-system
     ports:
       - "5000:5000"
+    environment:
+      <<: *common-env
+      SERVICE_NAME: agent-system
+      SERVICE_TYPE: api
+    volumes:
+      - ./app:/app:ro
+      - agent-logs:/var/log/agent
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
 
   backend:
     build:
@@ -16,8 +58,38 @@ services:
     container_name: backend
     ports:
       - "8000:8000"
+    environment:
+      - DEBUG=${DEBUG:-True}
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL:-postgres://user:pass@db:5432/backend}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./web:/web:ro
+      - backend-logs:/var/log/backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
-      - agent-system
+      agent-system:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
 
   celery-worker:
     build:
@@ -25,11 +97,109 @@ services:
       dockerfile: Dockerfile.agent
     container_name: celery_worker
     command: celery -A app.tasks.stock_task.celery worker --pool=threads --loglevel=info --concurrency=4
+    environment:
+      - DEBUG=${DEBUG:-True}
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL:-postgres://user:pass@db:5432/celery}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./app:/app:ro
+      - celery-logs:/var/log/celery
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.tasks.stock_task.celery", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
 
   redis:
-    image: redis:latest
+    image: redis:7.2-alpine
     container_name: redis
     ports:
-      - "6379"
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pass}
+      POSTGRES_DB: ${POSTGRES_DB:-agent}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+volumes:
+  redis-data:
+  postgres-data:
+  agent-logs:
+  backend-logs:
+  celery-logs:
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -10,7 +10,7 @@ celery.conf.update(
 )
 
 @celery.task(name="tasks.run_stock_agent_task")
-def run_stock_agent_task(query, debug=False):
+def run_stock_agent_task(query):
     stock_agent = StockAgent()
     result = stock_agent.run(query)
     return {"query": query, "result": result}
