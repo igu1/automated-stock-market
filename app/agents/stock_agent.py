@@ -7,13 +7,13 @@ from flask import current_app
 class StockAgent:
     """
     Main agent class for handling stock trading operations.
-    
+
     This agent provides capabilities for:
     - Web searching and data gathering
     - Stock trading operations
     - Portfolio management
     - Market data analysis
-    
+
     Attributes:
         debug (bool): Debug mode flag from app config
         max_iterations (int): Maximum iterations for agent operations
@@ -25,10 +25,11 @@ class StockAgent:
         managed_trader_agent (ManagedAgent): Managed wrapper for trader agent
         manager (CodeAgent): Main agent manager coordinating all operations
     """
+
     def __init__(self) -> None:
         """
         Initialize the StockAgent with configuration from Flask app.
-        
+
         Sets up:
         - Debug mode from app config
         - Maximum iterations for agent operations
@@ -75,13 +76,13 @@ class StockAgent:
     def run(self, task: Optional[str] = None) -> Any:
         """
         Execute a trading task using the agent system.
-        
+
         Args:
             task (str, optional): The task to execute. Must be provided.
-            
+
         Returns:
             Any: Result of the agent operation
-            
+
         Raises:
             ValueError: If no task is provided
         """
@@ -94,7 +95,7 @@ class StockAgent:
     def registerAllTools(self) -> List[Any]:
         """
         Register all available tools for the trading agent.
-        
+
         Returns:
             List[Any]: List of all registered tools categorized by:
                 - Data gathering tools
