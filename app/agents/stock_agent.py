@@ -45,7 +45,6 @@ class StockAgent:
         self.web_agent = ToolCallingAgent(
             tools=[VisitWebpageTool(), DuckDuckGoSearchTool()],
             model=self.model_id,
-            max_iterations=self.max_iterations,
         )
         self.managed_web_agent = ManagedAgent(
             agent=self.web_agent,
@@ -56,7 +55,6 @@ class StockAgent:
         self.trader = CodeAgent(
             tools=self.registerAllTools(),
             model=self.model_id,
-            max_iterations=self.max_iterations,
         )
         self.managed_trader_agent: ManagedAgent = ManagedAgent(
             agent=self.trader,
@@ -67,10 +65,8 @@ class StockAgent:
         self.manager = CodeAgent(
             tools=[],
             model=self.model_id,
-            max_iterations=self.max_iterations,
             managed_agents=[self.managed_web_agent, self.managed_trader_agent],
             additional_authorized_imports=self.used_packages,
-            planning_output=os.path.join(os.getcwd()),
         )
 
     def run(self, task: Optional[str] = None) -> Any:
