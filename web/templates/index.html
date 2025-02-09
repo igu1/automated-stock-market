@@ -90,35 +90,62 @@
                                     <div class="row">
                                         {% for task in tasks %}
                                             {% if task.status == 'PENDING' %}
-                                            <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0">
+                                            <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0 m-4">
                                                     <a href="{% url 'agent_status' task.task_id %}">
                                                     <div class="custom-block bg-white shadow-lg">
                                                             <div class="d-flex">
-                                                                <div>
-                                                                    <p class="mb-2 text-muted" style="color: gray !important; font-size: 12px">{{ task.task_id }}<span class="float-end">{{ task.created_at | date:"d/m/Y, H:i" }}</span></p>
-                                                                    <p class="mb-2" style="color: black !important;">{{ task.question | default:"No question" }}</p>
-                                                                    <hr />
-                                                                    <h6 class="mb-0" style="font-size: 16px !important;">{{ task.response|default:"Task not completed" }}</h6>
+                                                                <div style="position: relative;">
+                                                                    <div style="max-height: 200px; overflow: hidden; mask-image: linear-gradient(to bottom, black 60%, transparent 100%);">
+                                                                        <p class="mb-2 text-muted" style="color: gray !important; font-size: 12px">{{ task.task_id }}<span class="float-end">{{ task.created_at | date:"d/m/Y, H:i" }}</span></p>
+                                                                        <p class="mb-2" style="color: black !important;">{{ task.question | default:"No question" }}</p>
+                                                                        <hr />
+                                                                        <h6 class="mb-0" style="font-size: 16px !important;">{{ task.response|default:"Task not completed" }}</h6>
+                                                                    </div>
+                                                                    <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#modal-{{ task.task_id }}">
+                                                                        Show More
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                     </div>
                                                 </a>
                                             </div>
                                             {% else %}
-                                            <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0">
+                                            <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0 my-4">
                                                 <div class="custom-block bg-white shadow-lg">
                                                         <div class="d-flex">
-                                                            <div>
-                                                                <p class="mb-2 text-muted" style="color: gray !important; font-size: 12px">{{ task.task_id }}<span class="float-end">{{ task.created_at | date:"d/m/Y, H:i" }}</span></p>
-                                                                <p class="mb-2" style="color: black !important;">{{ task.question | default:"No question" }}</p>
-                                                                <hr />
-                                                                <h6 class="mb-0" style="font-size: 16px !important;">{{ task.response|default:"Task not completed" }}</h6>
+                                                            <div style="position: relative;">
+                                                                <div style="max-height: 200px; overflow: hidden; mask-image: linear-gradient(to bottom, black 60%, transparent 100%);">
+                                                                    <p class="mb-2 text-muted" style="color: gray !important; font-size: 12px">{{ task.task_id }}<span class="float-end">{{ task.created_at | date:"d/m/Y, H:i" }}</span></p>
+                                                                    <p class="mb-2" style="color: black !important;">{{ task.question | default:"No question" }}</p>
+                                                                    <hr />
+                                                                    <h6 class="mb-0" style="font-size: 16px !important;">{{ task.response|default:"Task not completed" }}</h6>
+                                                                </div>
+                                                                <button type="button" style="text-decoration: none;" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#modal-{{ task.task_id }}">
+                                                                    Show More
+                                                                </button>
                                                             </div>
                                                         </div>
                                                 </div>
-                                            </div>  
+                                            </div>
+                                            <!-- Modal -->
+                                            <div class="modal fade" id="modal-{{ task.task_id }}" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-scrollable">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Task Details</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p class="mb-2 text-muted">{{ task.created_at | date:"d/m/Y, H:i" }}</p>
+                                                            <p class="mb-2 text-dark">{{ task.question | default:"No question" }}</p>
+                                                            <hr />
+                                                            <h6 class="mb-0">{{ task.response|default:"Task not completed" }}</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             {% endif %}
-                                        {% endfor %}
+                                        {% endfor %}                                    
                                     </div>
                                 </div>
                             </div>

@@ -46,7 +46,7 @@
           "color": "terminal.ansiYellow",
           "commands": [
             "source venv/bin/activate",
-            "docker run --name redis -p 6379:6379 redis:latest"
+            "redis-server"
           ]
         }
       ]
