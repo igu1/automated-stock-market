@@ -1,6 +1,5 @@
-import os
-from typing import Optional, List, Dict, Any
-from smolagents import CodeAgent, LiteLLMModel, DuckDuckGoSearchTool, VisitWebpageTool, ManagedAgent, ToolCallingAgent
+from typing import Optional, List, Any
+from app.agents.core import CodeAgent, LiteLLMModel, DuckDuckGoSearchTool, VisitWebpageTool, ManagedAgent, ToolCallingAgent
 from app.tools import *
 
 from flask import current_app
@@ -42,7 +41,7 @@ class StockAgent:
         self.debug = config.get("DEBUG", True)
         self.max_iterations = config.get("MAX_ITERATIONS", 10)
         self.used_packages = []
-        self.model_id = LiteLLMModel("gemini/gemini-2.0-flash-exp", api_key="AIzaSyBPlCLkYN7mHOHjke7CJUoqmeJtohdoOls")
+        self.model_id = LiteLLMModel("deepseek/deepseek-chat", api_key="sk-cea1bf2948b14af989295653c77ac0b9")
         self.web_agent = ToolCallingAgent(
             tools=[VisitWebpageTool(), DuckDuckGoSearchTool()],
             model=self.model_id,
@@ -73,6 +72,7 @@ class StockAgent:
     def run(self, task: Optional[str] = None) -> Any:
         """
         Execute a trading task using the agent system.
+
 
         Args:
             task (str, optional): The task to execute. Must be provided.

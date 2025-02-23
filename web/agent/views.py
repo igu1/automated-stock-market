@@ -55,8 +55,11 @@ def agent_run(request):
         return JsonResponse({"error": "Invalid method"}, status=405)
 
 def index(request):
-    tasks = TaskModel.objects.filter(user=request.user).order_by("-created_at")
-    return render(request, "index.html", {"tasks": tasks, "message": ""})
+    if request.user.is_authenticated:
+        tasks = TaskModel.objects.filter(user=request.user).order_by("-created_at")
+        return render(request, "index.html", {"tasks": tasks, "message": ""})
+    else:
+        return redirect("admin:login")
 
 
 def tasks(request, status):

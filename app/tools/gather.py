@@ -1,8 +1,7 @@
-from smolagents import Tool
+from app.agents.core import Tool
 import json
 import requests
 import yfinance as yf
-from bs4 import BeautifulSoup
 
 class StockPriceTool(Tool):
     name = "stock_price"

@@ -52,8 +52,6 @@ services:
       REDIS_URL: redis://redis:6379/0
       DATABASE_URL: postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-pass}@db:5432/backend
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      API_KEY: ${ALPACA_API_KEY}
-      ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY}
     volumes:
       - ./web:/web:ro
       - backend-logs:/var/log/backend

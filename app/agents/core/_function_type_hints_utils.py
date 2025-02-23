@@ -1,11 +1,3 @@
-"""This module contains utilities exclusively taken from `transformers` repository.
-
-Since they are not specific to `transformers` and that `transformers` is an heavy dependencies, those helpers have
-been duplicated.
-
-TODO: move them to `huggingface_hub` to avoid code duplication.
-"""
-
 import inspect
 import json
 import os

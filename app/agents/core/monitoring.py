@@ -1,23 +1,21 @@
-#!/usr/bin/env python
-# coding=utf-8
-
-# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 from rich.text import Text
 
 
 class Monitor:
+    """A monitoring class that tracks metrics during agent execution.
+    
+    This class is responsible for:
+    1. Tracking step durations of agent operations
+    2. Counting input and output tokens if the model supports it
+    3. Logging metrics using a rich text logger
+    
+    Attributes:
+        step_durations (list): List of durations for each step
+        tracked_model: The model being monitored
+        logger: Logger instance for output
+        total_input_token_count (int): Running total of input tokens
+        total_output_token_count (int): Running total of output tokens
+    """
     def __init__(self, tracked_model, logger):
         self.step_durations = []
         self.tracked_model = tracked_model
@@ -27,12 +25,18 @@ class Monitor:
             self.total_output_token_count = 0
 
     def get_total_token_counts(self):
+        """Returns the total input and output token counts.
+        
+        Returns:
+            dict: Contains total input and output token counts
+        """
         return {
             "input": self.total_input_token_count,
             "output": self.total_output_token_count,
         }
 
     def reset(self):
+        """Resets all monitoring metrics to initial values."""
         self.step_durations = []
         self.total_input_token_count = 0
         self.total_output_token_count = 0

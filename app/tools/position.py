@@ -4,8 +4,8 @@ from alpaca.trading.client import TradingClient
 class AlpacaTradingBaseTool(Tool):
     def __init__(self):
         super().__init__()
-        self.trading_client = TradingClient("PKE6BISKQV2W3QTD8K28", "oXhV8HblBc05eBlxfXBV8FZl8RxYqgHjAsH4tlcV", paper=True)
-
+        self.trading_client = TradingClient("PKP9BIP2GUWJETFX8EFS", "vGsufC5KafplcjxDwemIK1h9dbgmLyF8WiqLZ6ol", paper=True)        
+        
 class PortfolioTool(AlpacaTradingBaseTool):
     name = "portfolio_tool"
     description = "Retrieve portfolio details or open positions from Alpaca's trading API."

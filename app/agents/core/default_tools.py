@@ -58,7 +58,7 @@ class PythonInterpreterTool(Tool):
                 state=state,
                 static_tools=self.base_python_tools,
                 authorized_imports=self.authorized_imports,
-            )[0]  # The second element is boolean is_final_answer
+            )[0]
         )
         return f"Stdout:\n{state['print_outputs']}\nOutput: {output}"
 
@@ -108,82 +108,6 @@ class DuckDuckGoSearchTool(Tool):
         postprocessed_results = [f"[{result['title']}]({result['href']})\n{result['body']}" for result in results]
         return "## Search Results\n\n" + "\n\n".join(postprocessed_results)
 
-
-class GoogleSearchTool(Tool):
-    name = "web_search"
-    description = """Performs a google web search for your query then returns a string of the top search results."""
-    inputs = {
-        "query": {"type": "string", "description": "The search query to perform."},
-        "filter_year": {
-            "type": "integer",
-            "description": "Optionally restrict results to a certain year",
-            "nullable": True,
-        },
-    }
-    output_type = "string"
-
-    def __init__(self):
-        super().__init__(self)
-        import os
-
-        self.serpapi_key = os.getenv("SERPAPI_API_KEY")
-
-    def forward(self, query: str, filter_year: Optional[int] = None) -> str:
-        import requests
-
-        if self.serpapi_key is None:
-            raise ValueError("Missing SerpAPI key. Make sure you have 'SERPAPI_API_KEY' in your env variables.")
-
-        params = {
-            "engine": "google",
-            "q": query,
-            "api_key": self.serpapi_key,
-            "google_domain": "google.com",
-        }
-        if filter_year is not None:
-            params["tbs"] = f"cdr:1,cd_min:01/01/{filter_year},cd_max:12/31/{filter_year}"
-
-        response = requests.get("https://serpapi.com/search.json", params=params)
-
-        if response.status_code == 200:
-            results = response.json()
-        else:
-            raise ValueError(response.json())
-
-        if "organic_results" not in results.keys():
-            if filter_year is not None:
-                raise Exception(
-                    f"'organic_results' key not found for query: '{query}' with filtering on year={filter_year}. Use a less restrictive query or do not filter on year."
-                )
-            else:
-                raise Exception(f"'organic_results' key not found for query: '{query}'. Use a less restrictive query.")
-        if len(results["organic_results"]) == 0:
-            year_filter_message = f" with filter year={filter_year}" if filter_year is not None else ""
-            return f"No results found for '{query}'{year_filter_message}. Try with a more general query, or remove the year filter."
-
-        web_snippets = []
-        if "organic_results" in results:
-            for idx, page in enumerate(results["organic_results"]):
-                date_published = ""
-                if "date" in page:
-                    date_published = "\nDate published: " + page["date"]
-
-                source = ""
-                if "source" in page:
-                    source = "\nSource: " + page["source"]
-
-                snippet = ""
-                if "snippet" in page:
-                    snippet = "\n" + page["snippet"]
-
-                redacted_version = f"{idx}. [{page['title']}]({page['link']}){date_published}{source}\n{snippet}"
-
-                redacted_version = redacted_version.replace("Your browser can't play this video.", "")
-                web_snippets.append(redacted_version)
-
-        return "## Search Results\n" + "\n\n".join(web_snippets)
-
-
 class VisitWebpageTool(Tool):
     name = "visit_webpage"
     description = (
@@ -229,41 +153,6 @@ class VisitWebpageTool(Tool):
             return f"An unexpected error occurred: {str(e)}"
 
 
-class SpeechToTextTool(PipelineTool):
-    default_checkpoint = "openai/whisper-large-v3-turbo"
-    description = "This is a tool that transcribes an audio into text. It returns the transcribed text."
-    name = "transcriber"
-    inputs = {
-        "audio": {
-            "type": "audio",
-            "description": "The audio to transcribe. Can be a local path, an url, or a tensor.",
-        }
-    }
-    output_type = "string"
-
-    def __new__(cls):
-        from transformers.models.whisper import (
-            WhisperForConditionalGeneration,
-            WhisperProcessor,
-        )
-
-        if not hasattr(cls, "pre_processor_class"):
-            cls.pre_processor_class = WhisperProcessor
-        if not hasattr(cls, "model_class"):
-            cls.model_class = WhisperForConditionalGeneration
-        return super().__new__()
-
-    def encode(self, audio):
-        audio = AgentAudio(audio).to_raw()
-        return self.pre_processor(audio, return_tensors="pt")
-
-    def forward(self, inputs):
-        return self.model.generate(inputs["input_features"])
-
-    def decode(self, outputs):
-        return self.pre_processor.batch_decode(outputs, skip_special_tokens=True)[0]
-
-
 TOOL_MAPPING = {
     tool_class.name: tool_class
     for tool_class in [
@@ -278,7 +167,5 @@ __all__ = [
     "FinalAnswerTool",
     "UserInputTool",
     "DuckDuckGoSearchTool",
-    "GoogleSearchTool",
     "VisitWebpageTool",
-    "SpeechToTextTool",
 ]

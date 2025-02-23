@@ -12,7 +12,6 @@ from rich.syntax import Syntax
 from rich.text import Text
 
 from .default_tools import TOOL_MAPPING, FinalAnswerTool
-from .e2b_executor import E2BExecutor
 from .local_python_executor import (
     BASE_BUILTIN_MODULES,
     LocalPythonInterpreter,
@@ -116,10 +115,10 @@ def format_prompt_with_tools(tools: Dict[str, Tool], prompt_template: str, tool_
 
 def show_agents_descriptions(managed_agents: Dict):
     managed_agents_descriptions = """
-        You can also give requests to team members.
-        Calling a team member works the same as for calling a tool: simply, the only argument you can give in the call is 'request', a long string explaining your request.
-        Given that this team member is a real human, you should be very verbose in your request.
-        Here is a list of the team members that you can call:"""
+You can also give requests to team members.
+Calling a team member works the same as for calling a tool: simply, the only argument you can give in the call is 'request', a long string explaining your request.
+Given that this team member is a real human, you should be very verbose in your request.
+Here is a list of the team members that you can call:"""
     for agent in managed_agents.values():
         managed_agents_descriptions += f"\n- {agent.name}: {agent.description}"
     return managed_agents_descriptions
@@ -146,24 +145,6 @@ YELLOW_HEX = "#d4b702"
 
 
 class MultiStepAgent:
-    """
-    Agent class that solves the given task step by step, using the ReAct framework:
-    While the objective is not reached, the agent will perform a cycle of action (given by the LLM) and observation (obtained from the environment).
-
-    Args:
-        tools (`list[Tool]`): [`Tool`]s that the agent can use.
-        model (`Callable[[list[dict[str, str]]], ChatMessage]`): Model that will generate the agent's actions.
-        system_prompt (`str`, *optional*): System prompt that will be used to generate the agent's actions.
-        tool_description_template (`str`, *optional*): Template used to describe the tools in the system prompt.
-        max_steps (`int`, default `6`): Maximum number of steps the agent can take to solve the task.
-        tool_parser (`Callable`, *optional*): Function used to parse the tool calls from the LLM output.
-        add_base_tools (`bool`, default `False`): Whether to add the base tools to the agent's tools.
-        verbosity_level (`int`, default `1`): Level of verbosity of the agent's logs.
-        grammar (`dict[str, str]`, *optional*): Grammar used to parse the LLM output.
-        managed_agents (`list`, *optional*): Managed agents that the agent can call.
-        step_callbacks (`list[Callable]`, *optional*): Callbacks that will be called at each step.
-        planning_interval (`int`, *optional*): Interval at which the agent will run a planning step.
-    """
 
     def __init__(
         self,
@@ -200,8 +181,9 @@ class MultiStepAgent:
         if managed_agents is not None:
             self.managed_agents = {agent.name: agent for agent in managed_agents}
 
-        for tool in tools:
-            assert isinstance(tool, Tool), f"This element is not of class Tool: {str(tool)}"
+        # for tool in tools:
+        #     assert isinstance(tool, Tool), f"This element is not of class Tool: {str(tool)}"
+            
         self.tools = {tool.name: tool for tool in tools}
         if add_base_tools:
             for tool_name, tool_class in TOOL_MAPPING.items():
@@ -225,17 +207,9 @@ class MultiStepAgent:
             self.tool_description_template,
         )
         self.system_prompt = format_prompt_with_managed_agents_descriptions(self.system_prompt, self.managed_agents)
-
         return self.system_prompt
 
     def write_inner_memory_from_logs(self, summary_mode: bool = False) -> List[Dict[str, str]]:
-        """
-        Reads past llm_outputs, actions, and observations or errors from the logs into a series of messages
-        that can be used as input to the LLM.
-
-        Args:
-            summary_mode (`bool`): Whether to write a summary of the logs or the full logs.
-        """
         memory = []
         for i, step_log in enumerate(self.logs):
             if isinstance(step_log, SystemPromptStep):
@@ -346,19 +320,12 @@ class MultiStepAgent:
         return [{key: value for key, value in log.items() if key != "agent_memory"} for log in self.logs]
 
     def extract_action(self, llm_output: str, split_token: str) -> Tuple[str, str]:
-        """
-        Parse action from the LLM output
-
-        Args:
-            llm_output (`str`): Output of the LLM
-            split_token (`str`): Separator for the action. Should match the example in the system prompt.
-        """
         try:
             split = llm_output.split(split_token)
             rationale, action = (
                 split[-2],
                 split[-1],
-            )  # NOTE: using indexes starting from the end solves for when you have more than one split_token in the output
+            )
         except Exception:
             raise AgentParsingError(
                 f"No '{split_token}' token provided in your output.\nYour output:\n{llm_output}\n. Be sure to include an action, prefaced with '{split_token}'!",
@@ -367,16 +334,6 @@ class MultiStepAgent:
         return rationale.strip(), action.strip()
 
     def provide_final_answer(self, task: str, images: Optional[list[str]]) -> str:
-        """
-        Provide the final answer to the task, based on the logs of the agent's interactions.
-
-        Args:
-            task (`str`): Task to perform.
-            images (`list[str]`, *optional*): Paths to image(s).
-
-        Returns:
-            `str`: Final answer to the task.
-        """
         if images:
             self.input_messages[0]["content"] = [
                 {
@@ -422,14 +379,6 @@ class MultiStepAgent:
             return f"Error in generating final LLM output:\n{e}"
 
     def execute_tool_call(self, tool_name: str, arguments: Union[Dict[str, str], str]) -> Any:
-        """
-        Execute tool with the provided input and returns the result.
-        This method replaces arguments with the actual values from the state if they refer to state variables.
-
-        Args:
-            tool_name (`str`): Name of the Tool to execute (should be one from self.tools).
-            arguments (Dict[str, str]): Arguments passed to the Tool.
-        """
         available_tools = {**self.tools, **self.managed_agents}
         if tool_name not in available_tools:
             error_msg = f"Unknown tool {tool_name}, should be instead one of {list(available_tools.keys())}."
@@ -481,32 +430,13 @@ class MultiStepAgent:
         images: Optional[List[str]] = None,
         additional_args: Optional[Dict] = None,
     ):
-        """
-        Run the agent for the given task.
-
-        Args:
-            task (`str`): Task to perform.
-            stream (`bool`): Whether to run in a streaming way.
-            reset (`bool`): Whether to reset the conversation or keep it going from previous run.
-            single_step (`bool`): Whether to run the agent in one-shot fashion.
-            images (`list[str]`, *optional*): Paths to image(s).
-            additional_args (`dict`): Any other variables that you want to pass to the agent run, for instance images or dataframes. Give them clear names!
-
-        Example:
-        ```py
-        from smolagents import CodeAgent
-        agent = CodeAgent(tools=[])
-        agent.run("What is the result of 2 power 3.7384?")
-        ```
-        """
-
         self.task = task
         if additional_args is not None:
             self.state.update(additional_args)
             self.task += f"""
-                You have been provided with these additional arguments, that you can access using the keys as variables in your python code:
-                {str(additional_args)}."""
-                
+You have been provided with these additional arguments, that you can access using the keys as variables in your python code:
+{str(additional_args)}."""
+
         self.initialize_system_prompt()
         system_prompt_step = SystemPromptStep(system_prompt=self.system_prompt)
 
@@ -538,24 +468,14 @@ class MultiStepAgent:
             step_log.end_time = time.time()
             step_log.duration = step_log.end_time - step_start_time
 
-            # Run the agent's step
             result = self.step(step_log)
             return result
 
         if stream:
-            # The steps are returned as they are executed through a generator to iterate on.
             return self._run(task=self.task, images=images)
-        # Outputs are returned only at the end as a string. We only look at the last step
         return deque(self._run(task=self.task, images=images), maxlen=1)[0]
 
     def _run(self, task: str, images: List[str] | None = None) -> Generator[str, None, None]:
-        """
-        Run the agent in streaming mode and returns a generator of all the steps.
-
-        Args:
-            task (`str`): Task to perform.
-            images (`list[str]`): Paths to image(s).
-        """
         final_answer = None
         self.step_number = 0
         while final_answer is None and self.step_number < self.max_steps:
@@ -581,7 +501,6 @@ class MultiStepAgent:
                     level=LogLevel.INFO,
                 )
 
-                # Run one step!
                 final_answer = self.step(step_log)
             except AgentError as e:
                 step_log.error = e
@@ -590,7 +509,6 @@ class MultiStepAgent:
                 step_log.duration = step_log.end_time - step_start_time
                 self.logs.append(step_log)
                 for callback in self.step_callbacks:
-                    # For compatibility with old callbacks that don't take the agent as an argument
                     if len(inspect.signature(callback).parameters) == 1:
                         callback(step_log)
                     else:
@@ -610,7 +528,6 @@ class MultiStepAgent:
             final_step_log.end_time = time.time()
             final_step_log.duration = step_log.end_time - step_start_time
             for callback in self.step_callbacks:
-                # For compatibility with old callbacks that don't take the agent as an argument
                 if len(inspect.signature(callback).parameters) == 1:
                     callback(final_step_log)
                 else:
@@ -620,14 +537,6 @@ class MultiStepAgent:
         yield handle_agent_output_types(final_answer)
 
     def planning_step(self, task, is_first_step: bool, step: int) -> None:
-        """
-        Used periodically by the agent to plan the next steps to reach the objective.
-
-        Args:
-            task (`str`): Task to perform.
-            is_first_step (`bool`): If this step is not the first one, the plan should be an update over a previous plan.
-            step (`int`): The number of the current step, used as an indication for the LLM.
-        """
         if is_first_step:
             message_prompt_facts = {
                 "role": MessageRole.SYSTEM,
@@ -636,11 +545,11 @@ class MultiStepAgent:
             message_prompt_task = {
                 "role": MessageRole.USER,
                 "content": f"""Here is the task:
-                ```
-                {task}
-                ```
-                Now begin!""",
-                            }
+```
+{task}
+```
+Now begin!""",
+            }
 
             answer_facts = self.model([message_prompt_facts, message_prompt_task]).content
 
@@ -663,23 +572,23 @@ class MultiStepAgent:
             ).content
 
             final_plan_redaction = f"""Here is the plan of action that I will follow to solve the task:
-            ```
-            {answer_plan}
-            ```"""
+```
+{answer_plan}
+```"""
             final_facts_redaction = f"""Here are the facts that I know so far:
-            ```
-            {answer_facts}
-            ```""".strip()
+```
+{answer_facts}
+```""".strip()
             self.logs.append(PlanningStep(plan=final_plan_redaction, facts=final_facts_redaction))
             self.logger.log(
                 Rule("[bold]Initial plan", style="orange"),
                 Text(final_plan_redaction),
                 level=LogLevel.INFO,
             )
-        else:
+        else:  # update plan
             agent_memory = self.write_inner_memory_from_logs(
                 summary_mode=False
-            ) 
+            )
 
             facts_update_system_prompt = {
                 "role": MessageRole.SYSTEM,
@@ -719,9 +628,9 @@ class MultiStepAgent:
             # Log final facts and plan
             final_plan_redaction = PLAN_UPDATE_FINAL_PLAN_REDACTION.format(task=task, plan_update=plan_update)
             final_facts_redaction = f"""Here is the updated list of the facts that I know:
-            ```
-            {facts_update}
-            ```"""
+```
+{facts_update}
+```"""
             self.logs.append(PlanningStep(plan=final_plan_redaction, facts=final_facts_redaction))
             self.logger.log(
                 Rule("[bold]Updated plan", style="orange"),
@@ -731,18 +640,6 @@ class MultiStepAgent:
 
 
 class ToolCallingAgent(MultiStepAgent):
-    """
-    This agent uses JSON-like tool calls, using method `model.get_tool_call` to leverage the LLM engine's tool calling capabilities.
-
-    Args:
-        tools (`list[Tool]`): [`Tool`]s that the agent can use.
-        model (`Callable[[list[dict[str, str]]], ChatMessage]`): Model that will generate the agent's actions.
-        system_prompt (`str`, *optional*): System prompt that will be used to generate the agent's actions.
-        planning_interval (`int`, *optional*): Interval at which the agent will run a planning step.
-        **kwargs: Additional keyword arguments.
-
-    """
-
     def __init__(
         self,
         tools: List[Tool],
@@ -762,15 +659,10 @@ class ToolCallingAgent(MultiStepAgent):
         )
 
     def step(self, log_entry: ActionStep) -> Union[None, Any]:
-        """
-        Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
-        Returns None if the step is not final.
-        """
         agent_memory = self.write_inner_memory_from_logs()
 
         self.input_messages = agent_memory
 
-        # Add new step in logs
         log_entry.agent_memory = agent_memory.copy()
 
         try:
@@ -830,14 +722,12 @@ class ToolCallingAgent(MultiStepAgent):
                     observation_name = "image.png"
                 elif observation_type == AgentAudio:
                     observation_name = "audio.mp3"
-                # TODO: observation naming could allow for different names of same type
-
                 self.state[observation_name] = observation
                 updated_information = f"Stored '{observation_name}' in memory."
             else:
                 updated_information = str(observation).strip()
             self.logger.log(
-                f"Observations: {updated_information.replace('[', '|')}",  # escape potential rich-tag-like components
+                f"Observations: {updated_information.replace('[', '|')}", 
                 level=LogLevel.INFO,
             )
             log_entry.observations = updated_information
@@ -845,21 +735,6 @@ class ToolCallingAgent(MultiStepAgent):
 
 
 class CodeAgent(MultiStepAgent):
-    """
-    In this agent, the tool calls will be formulated by the LLM in code format, then parsed and executed.
-
-    Args:
-        tools (`list[Tool]`): [`Tool`]s that the agent can use.
-        model (`Callable[[list[dict[str, str]]], ChatMessage]`): Model that will generate the agent's actions.
-        system_prompt (`str`, *optional*): System prompt that will be used to generate the agent's actions.
-        grammar (`dict[str, str]`, *optional*): Grammar used to parse the LLM output.
-        additional_authorized_imports (`list[str]`, *optional*): Additional authorized imports for the agent.
-        planning_interval (`int`, *optional*): Interval at which the agent will run a planning step.
-        max_print_outputs_length (`int`, *optional*): Maximum length of the print outputs.
-        **kwargs: Additional keyword arguments.
-
-    """
-
     def __init__(
         self,
         tools: List[Tool],
@@ -868,6 +743,7 @@ class CodeAgent(MultiStepAgent):
         grammar: Optional[Dict[str, str]] = None,
         additional_authorized_imports: Optional[List[str]] = None,
         planning_interval: Optional[int] = None,
+        use_e2b_executor: bool = False,
         max_print_outputs_length: Optional[int] = None,
         **kwargs,
     ):
@@ -892,6 +768,11 @@ class CodeAgent(MultiStepAgent):
                 0,
             )
 
+        if use_e2b_executor and len(self.managed_agents) > 0:
+            raise Exception(
+                f"You passed both {use_e2b_executor=} and some managed agents. Managed agents is not yet supported with remote code execution."
+            )
+
         all_tools = {**self.tools, **self.managed_agents}
         self.python_executor = LocalPythonInterpreter(
             self.additional_authorized_imports,
@@ -912,15 +793,10 @@ class CodeAgent(MultiStepAgent):
         return self.system_prompt
 
     def step(self, log_entry: ActionStep) -> Union[None, Any]:
-        """
-        Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
-        Returns None if the step is not final.
-        """
         agent_memory = self.write_inner_memory_from_logs()
 
         self.input_messages = agent_memory.copy()
 
-        # Add new step in logs
         log_entry.agent_memory = agent_memory.copy()
         try:
             additional_args = {"grammar": self.grammar} if self.grammar is not None else {}
@@ -1019,19 +895,6 @@ class CodeAgent(MultiStepAgent):
 
 
 class ManagedAgent:
-    """
-    ManagedAgent class that manages an agent and provides additional prompting and run summaries.
-
-    Args:
-        agent (`object`): The agent to be managed.
-        name (`str`): The name of the managed agent.
-        description (`str`): A description of the managed agent.
-        additional_prompting (`Optional[str]`, *optional*): Additional prompting for the managed agent. Defaults to None.
-        provide_run_summary (`bool`, *optional*): Whether to provide a run summary after the agent completes its task. Defaults to False.
-        managed_agent_prompt (`Optional[str]`, *optional*): Custom prompt for the managed agent. Defaults to None.
-
-    """
-
     def __init__(
         self,
         agent,
@@ -1049,7 +912,6 @@ class ManagedAgent:
         self.managed_agent_prompt = managed_agent_prompt if managed_agent_prompt else MANAGED_AGENT_PROMPT
 
     def write_full_task(self, task):
-        """Adds additional prompting for the managed agent, like 'add more detail in your answer'."""
         full_task = self.managed_agent_prompt.format(name=self.name, task=task)
         if self.additional_prompting:
             full_task = full_task.replace("\n{additional_prompting}", self.additional_prompting).strip()

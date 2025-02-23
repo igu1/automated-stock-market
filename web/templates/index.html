@@ -90,7 +90,7 @@
                                     <div class="row">
                                         {% for task in tasks %}
                                             {% if task.status == 'PENDING' %}
-                                            <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0 m-4">
+                                            <div class="col-lg-4 col-md-6 col-12 mb-4 mb-lg-0 my-2">
                                                     <a href="{% url 'agent_status' task.task_id %}">
                                                     <div class="custom-block bg-white shadow-lg">
                                                             <div class="d-flex">
