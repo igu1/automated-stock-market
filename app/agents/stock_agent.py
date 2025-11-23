@@ -41,7 +41,7 @@ class StockAgent:
         self.debug = config.get("DEBUG", True)
         self.max_iterations = config.get("MAX_ITERATIONS", 10)
         self.used_packages = []
-        self.model_id = LiteLLMModel("deepseek/deepseek-chat", api_key="sk-cea1bf2948b14af989295653c77ac0b9")
+        self.model_id = LiteLLMModel("deepseek/deepseek-chat", api_key="sk-994e446ef21d432388f30ceae8149501")
         self.web_agent = ToolCallingAgent(
             tools=[VisitWebpageTool(), DuckDuckGoSearchTool()],
             model=self.model_id,
