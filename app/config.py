@@ -1,13 +1,3 @@
-"""
-Configuration file for the Flask application
-
-* `Config`: Base configuration class
-* `DevelopmentConfig`: Configuration for development environment
-* `TestingConfig`: Configuration for testing environment
-* `ProductionConfig`: Configuration for production environment
-
-"""
-
 import os
 
 

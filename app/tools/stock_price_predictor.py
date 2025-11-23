@@ -14,15 +14,6 @@ class StockPricePredictorTool(Tool):
     output_type = "string"
 
     def forward(self, symbol: str) -> str:
-        """
-        Calls a dummy API to predict the price of a stock.
-
-        Args:
-            symbol (str): The stock symbol.
-
-        Returns:
-            str: A string containing the predicted stock price or an error message.
-        """
         dummy_url = f"https://dummyapi.example.com/predict/{symbol}"
         try:
             response = requests.get(dummy_url)
@@ -33,7 +24,6 @@ class StockPricePredictorTool(Tool):
             return f"An error occurred: {e}"
 
 if __name__ == '__main__':
-    # Example usage
     tool = StockPricePredictorTool()
     symbol = "AAPL"
     result = tool.forward(symbol)

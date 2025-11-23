@@ -25,7 +25,6 @@ class StockDataPreprocessor:
         self.target_scaler = None
         
     def load_data(self):
-        """Load and preprocess stock data"""
         df = yf.download(self.ticker, self.start_date, self.end_date, interval='1d')
         if df.empty:
             raise ValueError(f"No data found for ticker {self.ticker}")
@@ -34,40 +33,32 @@ class StockDataPreprocessor:
         return self._add_technical_indicators(df)
     
     def _add_technical_indicators(self, df):
-        """Add technical indicators to the dataframe"""
         df = df.copy()
         
-        # Moving Averages
         df['sma20'] = df['Close'].rolling(window=20).mean()
         df['sma50'] = df['Close'].rolling(window=50).mean()
         
-        # Bollinger Bands
         bb_period = 20
         bb_std = df['Close'].rolling(window=bb_period).std()
         df['bb_upper'] = df['Close'].rolling(window=bb_period).mean() + (bb_std * 2)
         df['bb_lower'] = df['Close'].rolling(window=bb_period).mean() - (bb_std * 2)
         
-        # Average True Range (ATR)
         high_low = df['High'] - df['Low']
         high_close = abs(df['High'] - df['Close'].shift())
         low_close = abs(df['Low'] - df['Close'].shift())
         true_range = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
         df['atr'] = true_range.rolling(window=14).mean()
         
-        # Stochastic Oscillator
         low_min = df['Low'].rolling(window=14).min()
         high_max = df['High'].rolling(window=14).max()
         df['stoch_k'] = ((df['Close'] - low_min) / (high_max - low_min)) * 100
         df['stoch_d'] = df['stoch_k'].rolling(window=3).mean()
         
-        # On-Balance Volume (OBV)
         df['obv'] = (np.sign(df['Close'].diff()) * df['Volume']).fillna(0).cumsum()
         
-        # Volume Weighted Average Price (VWAP)
         typical_price = (df['High'] + df['Low'] + df['Close']) / 3
         df['vwap'] = (typical_price * df['Volume']).cumsum() / df['Volume'].cumsum()
         
-        # RSI
         delta = df['Close'].diff()
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
@@ -76,41 +67,33 @@ class StockDataPreprocessor:
         rs = avg_gain / avg_loss
         df['rsi'] = 100 - (100 / (1 + rs))
         
-        # MACD
         exp1 = df['Close'].ewm(span=12, adjust=False).mean()
         exp2 = df['Close'].ewm(span=26, adjust=False).mean()
         df['macd'] = exp1 - exp2
         df['signal'] = df['macd'].ewm(span=9, adjust=False).mean()
         
-        # Normalize indicators
         for col in ['macd', 'signal', 'obv', 'atr']:
-            if df[col].std() != 0:  # Avoid division by zero
+            if df[col].std() != 0:
                 df[col] = (df[col] - df[col].mean()) / df[col].std()
         
         df.dropna(inplace=True)
         return df
     
     def prepare_data(self, df):
-        """Scale data and create sequences"""
         df = df.dropna()
         
-        # Initialize scalers if not already done
         if self.feature_scaler is None:
             self.feature_scaler = MinMaxScaler()
             self.target_scaler = MinMaxScaler()
         
-        # Scale features
         features = df[self.feature_cols].values
         scaled_features = self.feature_scaler.fit_transform(features)
         
-        # Scale target separately
         target = df[self.target_col].values.reshape(-1, 1)
         scaled_target = self.target_scaler.fit_transform(target)
         
-        # Create sequences
         X, y = self._create_sequences(scaled_features, scaled_target)
         
-        # Split into train and test sets (80-20 split)
         train_size = int(len(X) * 0.8)
         X_train, X_test = X[:train_size], X[train_size:]
         y_train, y_test = y[:train_size], y[train_size:]
@@ -118,7 +101,6 @@ class StockDataPreprocessor:
         return X_train, X_test, y_train, y_test
     
     def _create_sequences(self, features, target):
-        """Create sequences for LSTM"""
         X_list, y_list = [], []
         for i in range(len(features) - self.lookback):
             X_list.append(features[i:i+self.lookback])
@@ -137,28 +119,23 @@ class StockPredictor:
         self.logger = logging.getLogger(__name__)
     
     def _create_model(self, params):
-        """Create LSTM model with given parameters"""
         model = Sequential()
         
-        # First LSTM layer
         model.add(LSTM(params['lstm_units_1'], 
                       activation=params['activation'],
                       return_sequences=True,
                       input_shape=(self.preprocessor.lookback, len(self.preprocessor.feature_cols))))
         model.add(Dropout(params['dropout_1']))
         
-        # Second LSTM layer
         model.add(LSTM(params['lstm_units_2'],
                       activation=params['activation'],
                       return_sequences=True))
         model.add(Dropout(params['dropout_2']))
         
-        # Third LSTM layer
         model.add(LSTM(params['lstm_units_3'],
                       activation=params['activation']))
         model.add(Dropout(params['dropout_3']))
         
-        # Dense layers
         model.add(Dense(params['dense_units'], activation='relu'))
         model.add(Dense(1, activation='linear'))
         
@@ -168,7 +145,6 @@ class StockPredictor:
         return model
     
     def _grid_search(self, X_train, y_train, X_test, y_test):
-        """Perform grid search for hyperparameter tuning"""
         param_grid = {
             'lstm_units_1': [64],
             'lstm_units_2': [32],
@@ -216,12 +192,9 @@ class StockPredictor:
         return best_model, best_params
     
     def train(self):
-        """Train the model with automatic hyperparameter tuning"""
-        # Load and prepare data
         df = self.preprocessor.load_data()
         X_train, X_test, y_train, y_test = self.preprocessor.prepare_data(df)
         
-        # Don't use existing model - retrain for better results
         self.logger.info("Starting hyperparameter tuning...")
         self.model, self.best_params = self._grid_search(X_train, y_train, X_test, y_test)
 
@@ -241,11 +214,9 @@ class StockPredictor:
             ]
         )
         
-        # Save the model
         os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
         self.model.save(self.model_path)
         
-        # Get predictions
         predictions = self.predict(X_test)
         return predictions, self.preprocessor.target_scaler.inverse_transform(y_test)
     
@@ -260,5 +231,4 @@ class StockPredictor:
         return self.preprocessor.target_scaler.inverse_transform(predictions_scaled)
 
     def get_best_params(self):
-        """Return the best parameters found during training"""
         return self.best_params
